@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/sirupsen/logrus"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -19,28 +21,40 @@ type GRPCConfig struct {
 	Timeout time.Duration `yaml:"timeout"`
 }
 
+const configPath = "./config/config.local.yaml"
+
+var once sync.Once
+
 func MustLoad() *Config {
+
+	cfg := &Config{}
+
 	path := fetchConfigPath()
 	if path == "" {
-		panic("config path not found")
+		path = configPath
 	}
+
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		panic("config file does not exist: " + path + fmt.Sprintf("%v", err.Error()))
 	}
-	cfg := &Config{}
-	err := cleanenv.ReadConfig(path, cfg)
-	if err != nil {
-		panic(err.Error())
+	fmt.Println(path)
+	if err := cleanenv.ReadConfig(path, cfg); err != nil {
+		panic("cannot read config: " + err.Error())
 	}
+
+	helpText := "Список переменных окружения"
+	help, _ := cleanenv.GetDescription(cfg, &helpText)
+	logrus.Info(help)
+
 	return cfg
 }
 
 func fetchConfigPath() (res string) {
 
-	flag.StringVar(&res, "config", "", "path to config file")
-	flag.Parse()
-	if res == "" {
-		res = os.Getenv("./../../config/local.yaml")
-	}
+	once.Do(func() {
+		flag.StringVar(&res, "config", "", "path to config file")
+		flag.Parse()
+
+	})
 	return
 }
