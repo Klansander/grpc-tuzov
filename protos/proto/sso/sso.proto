@@ -20,7 +20,7 @@ message LoginRequest{
   int32 app_id =3;
 }
 message LoginResponse{
-  int64 token=1;
+string token =1;
 }
 
 message IsAdminRequest{

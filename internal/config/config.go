@@ -52,7 +52,7 @@ func MustLoad() *Config {
 func fetchConfigPath() (res string) {
 
 	once.Do(func() {
-		flag.StringVar(&res, "config", "", "path to config file")
+		flag.StringVar(&res, "config", configPath, "path to config file")
 		flag.Parse()
 
 	})
